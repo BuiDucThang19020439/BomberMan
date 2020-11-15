@@ -32,8 +32,12 @@ public class BombermanGame extends Application {
             "#           *   *  *          #",
             "###############################"
             };
+
     public static final int WIDTH = 31;
     public static final int HEIGHT = 13;
+
+    private long lastUpdate = System.nanoTime(); // Last time in which `handle()` was called
+    private double speed = 1 ; // The snake moves 50 pixels per second
 
     private GraphicsContext gc;
     private Canvas canvas;
@@ -65,46 +69,54 @@ public class BombermanGame extends Application {
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                entities.forEach(g -> g.render(gc));
+
+                long elapsedNanoSeconds = now - lastUpdate;
+                // 1 second = 1,000,000,000 (1 billion) nanoseconds
+                double elapsedSeconds = 3 * elapsedNanoSeconds / 1_000_000_000.0;
+
+                entities.forEach(g -> {
+                    stillObjects.get(g.getX()*HEIGHT + g.getY()).render(gc);
+                    g.render(gc);
+                    g.update((int) elapsedSeconds);
+                });
+
+                scene.setOnKeyPressed(e->{
+                    if(e.getCode()==KeyCode.UP) {
+                        if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()-1))) {
+                            stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()).render(gc);
+                            entities.get(0).setY(entities.get(0).getY()-1);
+                        }
+                    }
+                    else if(e.getCode()==KeyCode.DOWN) {
+                        if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()+1))) {
+                            stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()).render(gc);
+                            entities.get(0).setY(entities.get(0).getY()+1);
+                        }
+                    }
+                    else if(e.getCode()==KeyCode.RIGHT) {
+                        if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()+HEIGHT))) {
+                            stillObjects.get(entities.get(0).getX() * HEIGHT + entities.get(0).getY()).render(gc);
+                            entities.get(0).setX(entities.get(0).getX() + 1);
+                        }
+                    }
+                    else if(e.getCode()==KeyCode.LEFT) {
+                        if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()-HEIGHT))) {
+                            stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()).render(gc);
+                            entities.get(0).setX(entities.get(0).getX()-1);
+                        }
+                    }
+                });
                 //render();
-                //update();
             }
         };
         timer.start();
 
         createMap();
-
-        Entity bomberman = new Bomber(1, 1, Sprite.player_right.getFxImage());
-        entities.add(bomberman);
+        createEntity();
 
         stillObjects.forEach(g -> g.render(gc));
 
-        scene.setOnKeyPressed(e->{
-            if(e.getCode()==KeyCode.UP) {
-                if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()-1))) {
-                    stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()).render(gc);
-                    bomberman.setY(bomberman.getY()-1);
-                }
-            }
-            else if(e.getCode()==KeyCode.DOWN) {
-                if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()+1))) {
-                    stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()).render(gc);
-                    bomberman.setY(bomberman.getY()+1);
-                }
-            }
-            else if(e.getCode()==KeyCode.RIGHT) {
-                if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()+HEIGHT))) {
-                    stillObjects.get(entities.get(0).getX() * HEIGHT + entities.get(0).getY()).render(gc);
-                    bomberman.setX(bomberman.getX() + 1);
-                }
-            }
-            else if(e.getCode()==KeyCode.LEFT) {
-                if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()-HEIGHT))) {
-                    stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()).render(gc);
-                    bomberman.setX(bomberman.getX()-1);
-                }
-            }
-        });
+
     }
 
     public void createMap() {
@@ -115,9 +127,7 @@ public class BombermanGame extends Application {
                     object = new Wall(i, j, Sprite.wall.getFxImage());
                 } else if (map[j].charAt(i) == '*') {
                     object = new Brick(i, j, Sprite.brick.getFxImage());
-                }else if(map[j].charAt(i) == '1') {
-                    object = new BalloomEnemy(i,j,Sprite.balloom_right1.getFxImage());
-                }else {
+                } else {
                     object = new Grass(i, j, Sprite.grass.getFxImage());
                 }
                 stillObjects.add(object);
@@ -125,9 +135,26 @@ public class BombermanGame extends Application {
         }
     }
 
-    public void update() {
-        entities.forEach(Entity::update);
+    public void createEntity() {
+        for (int i = 0; i < WIDTH; i++) {
+            for (int j = 0; j < HEIGHT; j++) {
+                if (map[j].charAt(i) == 'p') {
+                    Entity object = new Bomber(i, j, Sprite.player_right.getFxImage());
+                    entities.add(object);
+                } else if (map[j].charAt(i) == '1') {
+                    Entity object = new BalloomEnemy(i, j, Sprite.balloom_left1.getFxImage());
+                    entities.add(object);
+                } else if (map[j].charAt(i) == '2') {
+                    Entity object = new OnealEnemy(i, j, Sprite.oneal_left1.getFxImage());
+                    entities.add(object);
+                }
+            }
+        }
     }
+
+    //public void update() {
+     //   entities.forEach(g->g.update(time));
+    //}
 
     public void render() {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());

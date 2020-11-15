@@ -8,7 +8,7 @@ public class Bomb extends Entity{
     }
 
     @Override
-    public void update() {
+    public void update(int time) {
 
     }
 

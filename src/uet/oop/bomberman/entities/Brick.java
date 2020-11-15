@@ -9,7 +9,7 @@ public class Brick extends Entity {
     }
 
     @Override
-    public void update() {
+    public void update(int time) {
         //  4 trang thai
     }
 }
