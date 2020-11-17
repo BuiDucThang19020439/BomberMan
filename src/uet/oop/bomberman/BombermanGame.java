@@ -36,8 +36,11 @@ public class BombermanGame extends Application {
     public static final int WIDTH = 31;
     public static final int HEIGHT = 13;
 
-    private long lastUpdate = System.nanoTime(); // Last time in which `handle()` was called
-    private double speed = 1 ; // The snake moves 50 pixels per second
+    private long lastUpdate; // Last time in which `handle()` was called
+    private int speed = 1 ; // The snake moves 4 pixels per second
+
+    private int dx;
+    private int dy;
 
     private GraphicsContext gc;
     private Canvas canvas;
@@ -66,46 +69,28 @@ public class BombermanGame extends Application {
         stage.setScene(scene);
         stage.show();
 
+        lastUpdate = System.nanoTime();
+
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
 
                 long elapsedNanoSeconds = now - lastUpdate;
                 // 1 second = 1,000,000,000 (1 billion) nanoseconds
-                double elapsedSeconds = 3 * elapsedNanoSeconds / 1_000_000_000.0;
+                double elapsedSeconds = speed * elapsedNanoSeconds / 1_000_000_000.0;
 
                 entities.forEach(g -> {
-                    stillObjects.get(g.getX()*HEIGHT + g.getY()).render(gc);
+//                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE).render(gc);
+//                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE + 1).render(gc);
+//                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE - 1).render(gc);
+//                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE - HEIGHT).render(gc);
+//                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE + HEIGHT).render(gc);
                     g.render(gc);
-                    g.update((int) elapsedSeconds);
+                    g.update((int)elapsedSeconds*speed);
                 });
 
-                scene.setOnKeyPressed(e->{
-                    if(e.getCode()==KeyCode.UP) {
-                        if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()-1))) {
-                            stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()).render(gc);
-                            entities.get(0).setY(entities.get(0).getY()-1);
-                        }
-                    }
-                    else if(e.getCode()==KeyCode.DOWN) {
-                        if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()+1))) {
-                            stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()).render(gc);
-                            entities.get(0).setY(entities.get(0).getY()+1);
-                        }
-                    }
-                    else if(e.getCode()==KeyCode.RIGHT) {
-                        if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()+HEIGHT))) {
-                            stillObjects.get(entities.get(0).getX() * HEIGHT + entities.get(0).getY()).render(gc);
-                            entities.get(0).setX(entities.get(0).getX() + 1);
-                        }
-                    }
-                    else if(e.getCode()==KeyCode.LEFT) {
-                        if(checkEntity(stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()-HEIGHT))) {
-                            stillObjects.get(entities.get(0).getX()*HEIGHT + entities.get(0).getY()).render(gc);
-                            entities.get(0).setX(entities.get(0).getX()-1);
-                        }
-                    }
-                });
+                entities.get(0).setX(entities.get(0).getX() + dx * (int) elapsedSeconds);
+                entities.get(0).setY(entities.get(0).getY() + dy * (int) elapsedSeconds);
                 //render();
             }
         };
@@ -116,6 +101,55 @@ public class BombermanGame extends Application {
 
         stillObjects.forEach(g -> g.render(gc));
 
+        scene.setOnKeyPressed(e->{
+
+                KeyCode key = e.getCode();
+
+                if (key == KeyCode.LEFT) {
+                    entities.get(0).setState("left");
+                    dx = -speed;
+                }
+
+                if (key == KeyCode.RIGHT) {
+                    entities.get(0).setState("right");
+                    dx = speed;
+                }
+
+                if (key == KeyCode.UP) {
+                    entities.get(0).setState("up");
+                    dy = -speed;
+                }
+
+                if (key == KeyCode.DOWN) {
+                    entities.get(0).setState("down");
+                    dy = speed;
+                }
+            });
+
+        scene.setOnKeyReleased(e->{
+
+                KeyCode key = e.getCode();
+
+                if (key == KeyCode.LEFT) {
+                    entities.get(0).setState("leftStop");
+                    dx = 0;
+                }
+
+                if (key == KeyCode.RIGHT) {
+                    entities.get(0).setState("rightStop");
+                    dx = 0;
+                }
+
+                if (key == KeyCode.UP) {
+                    entities.get(0).setState("upStop");
+                    dy = 0;
+                }
+
+                if (key == KeyCode.DOWN) {
+                    entities.get(0).setState("downStop");
+                    dy = 0;
+                }
+            });
 
     }
 
@@ -162,8 +196,7 @@ public class BombermanGame extends Application {
         entities.forEach(g -> g.render(gc));
     }
 
-    public boolean checkEntity(Entity e) {
-        if(e instanceof Wall || e instanceof Brick) return false;
+    public boolean collidesWith(Entity otherSprite) {
         return true;
     }
 

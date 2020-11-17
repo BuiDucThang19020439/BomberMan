@@ -15,6 +15,10 @@ public abstract class Entity {
     //Tọa độ Y tính từ góc trái trên trong Canvas
     protected int y;
 
+    //Trạng thái của vật thể
+    protected String state;
+
+
     protected Image img;
 
     //Khởi tạo đối tượng, chuyển từ tọa độ đơn vị sang tọa độ trong canvas
@@ -24,10 +28,10 @@ public abstract class Entity {
         this.img = img;
     }
 
+    //render hinh anh
     public void render(GraphicsContext gc) {
         gc.drawImage(img, x, y);
     }
-
 
     public abstract void update(int time);
 
@@ -52,7 +56,16 @@ public abstract class Entity {
         y = _y;
     }
 
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
     public void setImg(Image _img) {
         img = _img;
     }
+
 }
