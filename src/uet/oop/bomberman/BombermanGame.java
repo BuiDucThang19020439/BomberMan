@@ -37,7 +37,7 @@ public class BombermanGame extends Application {
     public static final int HEIGHT = 13;
 
     private long lastUpdate; // Last time in which `handle()` was called
-    private int speed = 1 ; // The snake moves 4 pixels per second
+    private int speed = 2 ; // The snake moves 4 pixels per second
 
     private int dx;
     private int dy;
@@ -77,7 +77,7 @@ public class BombermanGame extends Application {
 
                 long elapsedNanoSeconds = now - lastUpdate;
                 // 1 second = 1,000,000,000 (1 billion) nanoseconds
-                double elapsedSeconds = speed * elapsedNanoSeconds / 1_000_000_000.0;
+                double elapsedSeconds = 6 * elapsedNanoSeconds / 1_000_000_000.0;
 
                 entities.forEach(g -> {
 //                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE).render(gc);
@@ -85,12 +85,12 @@ public class BombermanGame extends Application {
 //                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE - 1).render(gc);
 //                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE - HEIGHT).render(gc);
 //                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE + HEIGHT).render(gc);
-                    g.render(gc);
-                    g.update((int)elapsedSeconds*speed);
+//                    g.render(gc);
+                    g.update((int)elapsedSeconds);
                 });
 
-                entities.get(0).setX(entities.get(0).getX() + dx * (int) elapsedSeconds);
-                entities.get(0).setY(entities.get(0).getY() + dy * (int) elapsedSeconds);
+                render();
+                move(entities.get(0));
                 //render();
             }
         };
@@ -196,8 +196,85 @@ public class BombermanGame extends Application {
         entities.forEach(g -> g.render(gc));
     }
 
-    public boolean collidesWith(Entity otherSprite) {
-        return true;
+
+
+    public void move(Entity entity) {
+        int realX = entity.getX()/Sprite.SCALED_SIZE;
+        int realY = entity.getY()/Sprite.SCALED_SIZE;
+        int tempX = entity.getX()%Sprite.SCALED_SIZE;
+        int tempY = entity.getY()%Sprite.SCALED_SIZE;
+        boolean check;
+        if(entity.getState().equals("right")){
+
+            //làm tròn Y để dễ di chuyển
+            if(tempY<=10 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + HEIGHT ))) entity.setY(realY * Sprite.SCALED_SIZE);
+            if(tempY>=22 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + HEIGHT + 1))) entity.setY((realY + 1) * Sprite.SCALED_SIZE);
+
+            //kiểm tra va chạm để di chuyển
+            if(tempY == 0) {
+                if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + HEIGHT))) {
+                    entity.setX(entity.getX() + dx);
+                    System.out.println(entity.getX() + "   " + entity.getY());
+                }
+            }
+        }
+        if(entity.getState().equals("up")){
+
+            //làm tròn X để dễ di chuyển
+            if(tempX<=10 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - 1))) entity.setX(realX * Sprite.SCALED_SIZE);
+            if(tempX>=22 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + HEIGHT - 1))) entity.setX((realX + 1) * Sprite.SCALED_SIZE);
+
+            //kiểm tra va chạm để di chuyển
+            if(tempX == 0) {
+                if(tempY == 0) {
+                    if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - 1))) {
+                        entity.setY(entity.getY() + dy);
+                        System.out.println(entity.getX() + "   " + entity.getY());
+                    }
+                }
+                else {
+                    if(entity.collidesWith(stillObjects.get(realX * HEIGHT + realY ))) {
+                        entity.setY(entity.getY() + dy);
+                        System.out.println(entity.getX() + "   " + entity.getY());
+                    }
+                }
+            }
+        }
+        if(entity.getState().equals("left")){
+
+            //làm tròn Y để dễ di chuyển
+            if(tempY<=10 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - HEIGHT ))) entity.setY(realY * Sprite.SCALED_SIZE);
+            if(tempY>=22 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - HEIGHT + 1))) entity.setY((realY + 1) * Sprite.SCALED_SIZE);
+
+            //kiểm tra va chạm để di chuyển
+            if(tempY == 0) {
+                if(tempX == 0) {
+                    if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - HEIGHT))) {
+                        entity.setX(entity.getX() + dx);
+                        System.out.println(entity.getX() + "   " + entity.getY());
+                    }
+                }
+                else {
+                    if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY))) {
+                        entity.setX(entity.getX() + dx);
+                        System.out.println(entity.getX() + "   " + entity.getY());
+                    }
+                }
+            }
+        }
+        if(entity.getState().equals("down")){
+            //làm tròn X để dễ di chuyển
+            if (tempX <= 10 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + 1 ))) entity.setX(realX * Sprite.SCALED_SIZE);
+            if (tempX >= 22 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + HEIGHT + 1))) entity.setX((realX + 1) * Sprite.SCALED_SIZE);
+
+            //kiểm tra va chạm để di chuyển
+            if (tempX == 0) {
+                if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + 1))) {
+                    entity.setY(entity.getY() + dy);
+                    System.out.println(entity.getX() + "   " + entity.getY());
+                }
+            }
+        }
     }
 
 }
