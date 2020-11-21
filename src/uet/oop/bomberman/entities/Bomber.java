@@ -1,16 +1,12 @@
-package uet.oop.bomberman.entities;
+package uet.oop.bomberman.entities.Mob;
 
-import javafx.scene.SnapshotParameters;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import uet.oop.bomberman.graphics.Sprite;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.Node;
 
-public class Bomber extends Entity {
+public class Bomber extends Mob {
 
     public Bomber(int x, int y, Image img) {
         super( x, y, img);

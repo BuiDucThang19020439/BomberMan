@@ -7,10 +7,14 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
-import uet.oop.bomberman.entities.*;
+import uet.oop.bomberman.entities.base.*;
+import uet.oop.bomberman.entities.Bomb.*;
+import uet.oop.bomberman.entities.Item.*;
+import uet.oop.bomberman.entities.Mob.*;
+import uet.oop.bomberman.entities.Entity;
 import uet.oop.bomberman.graphics.Sprite;
+import uet.oop.bomberman.event.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,15 +41,20 @@ public class BombermanGame extends Application {
     public static final int HEIGHT = 13;
 
     private long lastUpdate; // Last time in which `handle()` was called
-    private int speed = 2 ; // The snake moves 4 pixels per second
+    private int speed = 2 ; // tốc độ nhân vật di chuyển
+    private int enemySpeed = 1; //tốc độ địch di chuyển
+    private int timer = 2; //hẹn giờ cho bom nổ
+    private int maxBomb = 1;// Số bomb tối đa được đặt
 
     private int dx;
     private int dy;
 
     private GraphicsContext gc;
     private Canvas canvas;
-    private List<Entity> entities = new ArrayList<>();
+
+    private List<Mob> entities = new ArrayList<>();
     private List<Entity> stillObjects = new ArrayList<>();
+    private List<Bomb> bomb = new ArrayList<>();
 
 
     public static void main(String[] args) {
@@ -80,17 +89,15 @@ public class BombermanGame extends Application {
                 double elapsedSeconds = 6 * elapsedNanoSeconds / 1_000_000_000.0;
 
                 entities.forEach(g -> {
-//                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE).render(gc);
-//                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE + 1).render(gc);
-//                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE - 1).render(gc);
-//                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE - HEIGHT).render(gc);
-//                    stillObjects.get(g.getX() * HEIGHT/Sprite.SCALED_SIZE + g.getY()/Sprite.SCALED_SIZE + HEIGHT).render(gc);
-//                    g.render(gc);
-                    g.update((int)elapsedSeconds);
+                    g.update((int) elapsedSeconds);
+                });
+
+                bomb.forEach(g -> {
+                    g.update((int) elapsedSeconds);
                 });
 
                 render();
-                move(entities.get(0));
+                Movement.move(entities.get(0), dx, dy, stillObjects, HEIGHT, WIDTH, bomb);
                 //render();
             }
         };
@@ -123,6 +130,10 @@ public class BombermanGame extends Application {
                 if (key == KeyCode.DOWN) {
                     entities.get(0).setState("down");
                     dy = speed;
+                }
+
+                if (key == KeyCode.SPACE) {
+                    createBomb();
                 }
             });
 
@@ -173,108 +184,43 @@ public class BombermanGame extends Application {
         for (int i = 0; i < WIDTH; i++) {
             for (int j = 0; j < HEIGHT; j++) {
                 if (map[j].charAt(i) == 'p') {
-                    Entity object = new Bomber(i, j, Sprite.player_right.getFxImage());
+                    Mob object = new Bomber(i, j, Sprite.player_right.getFxImage());
                     entities.add(object);
                 } else if (map[j].charAt(i) == '1') {
-                    Entity object = new BalloomEnemy(i, j, Sprite.balloom_left1.getFxImage());
+                    Mob object = new BalloomEnemy(i, j, Sprite.balloom_left1.getFxImage());
                     entities.add(object);
                 } else if (map[j].charAt(i) == '2') {
-                    Entity object = new OnealEnemy(i, j, Sprite.oneal_left1.getFxImage());
+                    Mob object = new OnealEnemy(i, j, Sprite.oneal_left1.getFxImage());
                     entities.add(object);
                 }
             }
         }
     }
 
-    //public void update() {
-     //   entities.forEach(g->g.update(time));
-    //}
+    public void createBomb() {
+        int realX = entities.get(0).getX()/Sprite.SCALED_SIZE;
+        int realY = entities.get(0).getY()/Sprite.SCALED_SIZE;
+        int tempX = entities.get(0).getX()%Sprite.SCALED_SIZE;
+        int tempY = entities.get(0).getY()%Sprite.SCALED_SIZE;
+        if(tempX > 16) realX += 1;
+        if(tempY > 16) realY += 1;
+        if(bomb.size() < maxBomb) {
+            Bomb newBomb = new Bomb(realX, realY, Sprite.bomb_2.getFxImage());
+            bomb.add(newBomb);
+            newBomb.startCount();
+        }
+    }
 
     public void render() {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         stillObjects.forEach(g -> g.render(gc));
+        bomb.removeIf(g -> {
+            return g.getState().equals("dead");
+        });
+        bomb.forEach(g -> {
+            g.render(gc);
+        });
         entities.forEach(g -> g.render(gc));
-    }
-
-
-
-    public void move(Entity entity) {
-        int realX = entity.getX()/Sprite.SCALED_SIZE;
-        int realY = entity.getY()/Sprite.SCALED_SIZE;
-        int tempX = entity.getX()%Sprite.SCALED_SIZE;
-        int tempY = entity.getY()%Sprite.SCALED_SIZE;
-        boolean check;
-        if(entity.getState().equals("right")){
-
-            //làm tròn Y để dễ di chuyển
-            if(tempY<=10 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + HEIGHT ))) entity.setY(realY * Sprite.SCALED_SIZE);
-            if(tempY>=22 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + HEIGHT + 1))) entity.setY((realY + 1) * Sprite.SCALED_SIZE);
-
-            //kiểm tra va chạm để di chuyển
-            if(tempY == 0) {
-                if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + HEIGHT))) {
-                    entity.setX(entity.getX() + dx);
-                    System.out.println(entity.getX() + "   " + entity.getY());
-                }
-            }
-        }
-        if(entity.getState().equals("up")){
-
-            //làm tròn X để dễ di chuyển
-            if(tempX<=10 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - 1))) entity.setX(realX * Sprite.SCALED_SIZE);
-            if(tempX>=22 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + HEIGHT - 1))) entity.setX((realX + 1) * Sprite.SCALED_SIZE);
-
-            //kiểm tra va chạm để di chuyển
-            if(tempX == 0) {
-                if(tempY == 0) {
-                    if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - 1))) {
-                        entity.setY(entity.getY() + dy);
-                        System.out.println(entity.getX() + "   " + entity.getY());
-                    }
-                }
-                else {
-                    if(entity.collidesWith(stillObjects.get(realX * HEIGHT + realY ))) {
-                        entity.setY(entity.getY() + dy);
-                        System.out.println(entity.getX() + "   " + entity.getY());
-                    }
-                }
-            }
-        }
-        if(entity.getState().equals("left")){
-
-            //làm tròn Y để dễ di chuyển
-            if(tempY<=10 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - HEIGHT ))) entity.setY(realY * Sprite.SCALED_SIZE);
-            if(tempY>=22 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - HEIGHT + 1))) entity.setY((realY + 1) * Sprite.SCALED_SIZE);
-
-            //kiểm tra va chạm để di chuyển
-            if(tempY == 0) {
-                if(tempX == 0) {
-                    if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - HEIGHT))) {
-                        entity.setX(entity.getX() + dx);
-                        System.out.println(entity.getX() + "   " + entity.getY());
-                    }
-                }
-                else {
-                    if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY))) {
-                        entity.setX(entity.getX() + dx);
-                        System.out.println(entity.getX() + "   " + entity.getY());
-                    }
-                }
-            }
-        }
-        if(entity.getState().equals("down")){
-            //làm tròn X để dễ di chuyển
-            if (tempX <= 10 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + 1 ))) entity.setX(realX * Sprite.SCALED_SIZE);
-            if (tempX >= 22 && entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + HEIGHT + 1))) entity.setX((realX + 1) * Sprite.SCALED_SIZE);
-
-            //kiểm tra va chạm để di chuyển
-            if (tempX == 0) {
-                if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + 1))) {
-                    entity.setY(entity.getY() + dy);
-                    System.out.println(entity.getX() + "   " + entity.getY());
-                }
-            }
-        }
     }
 
 }
