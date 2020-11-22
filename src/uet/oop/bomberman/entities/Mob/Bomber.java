@@ -48,6 +48,10 @@ public class Bomber extends Mob {
                 this.img = Sprite.player_down.getFxImage();
                 break;
             }
+            case "dead" : {
+                this.img = Sprite.movingSprite(Sprite.player_dead1,Sprite.player_dead2,Sprite.player_dead3,time,3).getFxImage();
+                break;
+            }
         }
     }
 

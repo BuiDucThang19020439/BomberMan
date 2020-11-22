@@ -5,8 +5,6 @@ import uet.oop.bomberman.entities.Entity;
 
 public class Flame extends Entity{
 
-    private int level = 1;
-
     public Flame(int x, int y, Image img) {
         super( x, y, img);
     }
@@ -16,11 +14,4 @@ public class Flame extends Entity{
 
     }
 
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
-    }
 }

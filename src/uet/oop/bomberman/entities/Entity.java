@@ -15,7 +15,7 @@ public abstract class Entity {
     protected int y;
 
     //Trạng thái của vật thể
-    protected String state;
+    protected String state = "";
 
 
     protected Image img;

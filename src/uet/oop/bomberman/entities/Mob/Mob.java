@@ -2,6 +2,8 @@ package uet.oop.bomberman.entities.Mob;
 
 import javafx.scene.image.Image;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Shape;
+import uet.oop.bomberman.entities.Bomb.Flame;
 import uet.oop.bomberman.entities.Entity;
 import uet.oop.bomberman.entities.base.Brick;
 import uet.oop.bomberman.entities.base.Wall;
@@ -30,7 +32,7 @@ public class Mob extends Entity {
                 Rectangle s2 = new Rectangle(other.getX(), other.getY());
                 s2.setHeight(Sprite.SCALED_SIZE);
                 s2.setWidth(Sprite.SCALED_SIZE);
-                if (s1.getBoundsInParent().intersects(s2.getBoundsInParent())) return false;
+                return !s1.getBoundsInParent().intersects(s2.getBoundsInParent());
             }
         }
         return true;
@@ -38,12 +40,42 @@ public class Mob extends Entity {
 
     public boolean collidesWithBomb(List<Bomb> bomb) {
         for(Entity other : bomb) {
-            if((x-(other.getX()-32)==0 && state=="right" && y == other.getY())
-            || (x-(other.getX()+32)==0 && state=="left" && y == other.getY())
-            || (y-(other.getY()-32)==0 && state=="down" && x == other.getX())
-            || (y-(other.getY()+32)==0 && state=="up" && x == other.getX())) return false;
+            if((x-(other.getX()-32)==0 && state.equals("right") && y == other.getY())
+                || (x-(other.getX()+32)==0 && state.equals("left") && y == other.getY())
+                || (y-(other.getY()-32)==0 && state.equals("down") && x == other.getX())
+                || (y-(other.getY()+32)==0 && state.equals("up") && x == other.getX())) return false;
         }
         return true;
     }
+
+    public void checkDeadFlame(List<Bomb> bomb) {
+
+        for (Bomb other :bomb) {
+            if(this.getX() < other.getX() + (other.getMaxSizeRight() + 1) * Sprite.SCALED_SIZE && this.getX() > other.getX() - (other.getMaxSizeLeft() + 1) * Sprite.SCALED_SIZE && this.getY() == other.getY()) {
+                this.state = "dead";
+                break;
+            }
+            if(this.getY() < other.getY() + (other.getMaxSizeDown() + 1) * Sprite.SCALED_SIZE && this.getY() > other.getY() - (other.getMaxSizeTop() + 1) * Sprite.SCALED_SIZE && this.getX() == other.getX()) {
+                this.state = "dead";
+                break;
+            }
+        }
+    }
+
+    public void checkDeadEnemy(List<Mob> entities) {
+        for(Mob other :entities) {
+            if(!(other instanceof Bomber)) {
+                if(this.getX() <= other.getX() + Sprite.SCALED_SIZE && this.getX() >= other.getX() - Sprite.SCALED_SIZE && this.getY() == other.getY()) {
+                    this.state = "dead";
+                    break;
+                }
+                if(this.getY() <= other.getY() + Sprite.SCALED_SIZE && this.getY() >= other.getY() - Sprite.SCALED_SIZE && this.getX() == other.getX()) {
+                    this.state = "dead";
+                    break;
+                }
+            }
+        }
+    }
+
 
 }

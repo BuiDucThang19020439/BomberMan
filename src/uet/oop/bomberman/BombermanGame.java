@@ -10,7 +10,6 @@ import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import uet.oop.bomberman.entities.base.*;
 import uet.oop.bomberman.entities.Bomb.*;
-import uet.oop.bomberman.entities.Item.*;
 import uet.oop.bomberman.entities.Mob.*;
 import uet.oop.bomberman.entities.Entity;
 import uet.oop.bomberman.graphics.Sprite;
@@ -18,6 +17,8 @@ import uet.oop.bomberman.event.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class BombermanGame extends Application {
 
@@ -43,8 +44,8 @@ public class BombermanGame extends Application {
     private long lastUpdate; // Last time in which `handle()` was called
     private int speed = 2 ; // tốc độ nhân vật di chuyển
     private int enemySpeed = 1; //tốc độ địch di chuyển
-    private int timer = 2; //hẹn giờ cho bom nổ
-    private int maxBomb = 1;// Số bomb tối đa được đặt
+    private int maxBomb = 2;// Số bomb tối đa được đặt
+    private int flameLevel = 1;//do dai cua flame
 
     private int dx;
     private int dy;
@@ -55,7 +56,7 @@ public class BombermanGame extends Application {
     private List<Mob> entities = new ArrayList<>();
     private List<Entity> stillObjects = new ArrayList<>();
     private List<Bomb> bomb = new ArrayList<>();
-
+    private List<Flame> temp = new ArrayList<>();
 
     public static void main(String[] args) {
         Application.launch(BombermanGame.class);
@@ -80,6 +81,10 @@ public class BombermanGame extends Application {
 
         lastUpdate = System.nanoTime();
 
+        createMap();
+        createEntity();
+
+
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
@@ -96,49 +101,61 @@ public class BombermanGame extends Application {
                     g.update((int) elapsedSeconds);
                 });
 
+                for (Entity stillObject : stillObjects) {
+                    stillObject.update((int) elapsedSeconds);
+                }
+
                 render();
                 Movement.move(entities.get(0), dx, dy, stillObjects, HEIGHT, WIDTH, bomb);
-                //render();
+
+//                if (entities.get(0).getState().equals("dead")) {
+//                    Timer temp = new Timer();
+//                    temp.schedule(new TimerTask() {
+//                        @Override
+//                        public void run() {
+//                            stop();
+//                            temp.cancel();
+//                        }
+//                    },300,1);
+//
+//                }
             }
         };
         timer.start();
 
-        createMap();
-        createEntity();
-
-        stillObjects.forEach(g -> g.render(gc));
 
         scene.setOnKeyPressed(e->{
+                if(!entities.get(0).getState().equals("dead")) {
+                    KeyCode key = e.getCode();
 
-                KeyCode key = e.getCode();
+                    if (key == KeyCode.LEFT) {
+                        entities.get(0).setState("left");
+                        dx = -speed;
+                    }
 
-                if (key == KeyCode.LEFT) {
-                    entities.get(0).setState("left");
-                    dx = -speed;
-                }
+                    if (key == KeyCode.RIGHT) {
+                        entities.get(0).setState("right");
+                        dx = speed;
+                    }
 
-                if (key == KeyCode.RIGHT) {
-                    entities.get(0).setState("right");
-                    dx = speed;
-                }
+                    if (key == KeyCode.UP) {
+                        entities.get(0).setState("up");
+                        dy = -speed;
+                    }
 
-                if (key == KeyCode.UP) {
-                    entities.get(0).setState("up");
-                    dy = -speed;
-                }
+                    if (key == KeyCode.DOWN) {
+                        entities.get(0).setState("down");
+                        dy = speed;
+                    }
 
-                if (key == KeyCode.DOWN) {
-                    entities.get(0).setState("down");
-                    dy = speed;
-                }
-
-                if (key == KeyCode.SPACE) {
-                    createBomb();
+                    if (key == KeyCode.SPACE) {
+                        createBomb();
+                    }
                 }
             });
 
         scene.setOnKeyReleased(e->{
-
+            if(!entities.get(0).getState().equals("dead")) {
                 KeyCode key = e.getCode();
 
                 if (key == KeyCode.LEFT) {
@@ -160,6 +177,7 @@ public class BombermanGame extends Application {
                     entities.get(0).setState("downStop");
                     dy = 0;
                 }
+            }
             });
 
     }
@@ -206,6 +224,7 @@ public class BombermanGame extends Application {
         if(tempY > 16) realY += 1;
         if(bomb.size() < maxBomb) {
             Bomb newBomb = new Bomb(realX, realY, Sprite.bomb_2.getFxImage());
+            newBomb.setLevel(flameLevel);
             bomb.add(newBomb);
             newBomb.startCount();
         }
@@ -214,13 +233,40 @@ public class BombermanGame extends Application {
     public void render() {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         stillObjects.forEach(g -> g.render(gc));
-        bomb.removeIf(g -> {
-            return g.getState().equals("dead");
-        });
+        bomb.forEach(g -> g.render(gc));
         bomb.forEach(g -> {
-            g.render(gc);
+            if(g.getState().equals("dead")) {
+                destroyAround(g);
+                g.collideWithBrick(stillObjects,HEIGHT);
+            }
         });
-        entities.forEach(g -> g.render(gc));
+        entities.forEach(g -> {
+            g.render(gc);
+            if(!temp.isEmpty()) g.checkDeadFlame(bomb);
+            if(g instanceof Bomber) {
+                g.checkDeadEnemy(entities);
+            }
+        });
+        entities.removeIf(g -> {
+           return g.getState().equals("dead");
+        });
+        temp.clear();
+    }
+
+    public void destroyAround(Bomb g) {
+        g.explode(stillObjects,HEIGHT,temp);
+        g.collideWithAnotherBomb(bomb,HEIGHT,temp,stillObjects);
+        temp.forEach(v -> v.render(gc));
+        Timer count = new Timer();
+        count.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                g.setState("explode");
+                bomb.removeIf(g -> {
+                    return g.getState().equals("explode");
+                });
+                count.cancel();
+            }},200,1);
     }
 
 }

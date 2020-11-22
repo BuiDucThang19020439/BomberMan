@@ -1,6 +1,6 @@
 package uet.oop.bomberman.event;
 
-import uet.oop.bomberman.entities.*;
+import uet.oop.bomberman.entities.Entity;
 import uet.oop.bomberman.entities.Mob.*;
 import uet.oop.bomberman.entities.Bomb.*;
 import uet.oop.bomberman.graphics.Sprite;

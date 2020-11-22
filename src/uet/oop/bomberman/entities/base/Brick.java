@@ -2,6 +2,7 @@ package uet.oop.bomberman.entities.base;
 
 import javafx.scene.image.Image;
 import uet.oop.bomberman.entities.Entity;
+import uet.oop.bomberman.graphics.Sprite;
 
 public class Brick extends Entity {
 
@@ -11,6 +12,8 @@ public class Brick extends Entity {
 
     @Override
     public void update(int time) {
-        //  4 trang thai
+        if(state.equals("dead")) {
+            this.img = Sprite.movingSprite(Sprite.brick_exploded,Sprite.brick_exploded1,Sprite.brick_exploded2,time,3).getFxImage();
+        }
     }
 }
