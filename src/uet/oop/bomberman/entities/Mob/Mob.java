@@ -65,11 +65,11 @@ public class Mob extends Entity {
     public void checkDeadEnemy(List<Mob> entities) {
         for(Mob other :entities) {
             if(!(other instanceof Bomber)) {
-                if(this.getX() <= other.getX() + Sprite.SCALED_SIZE && this.getX() >= other.getX() - Sprite.SCALED_SIZE && this.getY() == other.getY()) {
+                if(this.getX() < other.getX() + Sprite.SCALED_SIZE && this.getX() > other.getX() - Sprite.SCALED_SIZE && this.getY() == other.getY()) {
                     this.state = "dead";
                     break;
                 }
-                if(this.getY() <= other.getY() + Sprite.SCALED_SIZE && this.getY() >= other.getY() - Sprite.SCALED_SIZE && this.getX() == other.getX()) {
+                if(this.getY() < other.getY() + Sprite.SCALED_SIZE && this.getY() > other.getY() - Sprite.SCALED_SIZE && this.getX() == other.getX()) {
                     this.state = "dead";
                     break;
                 }

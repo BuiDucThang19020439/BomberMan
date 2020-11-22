@@ -93,6 +93,10 @@ public class BombermanGame extends Application {
                 // 1 second = 1,000,000,000 (1 billion) nanoseconds
                 double elapsedSeconds = 6 * elapsedNanoSeconds / 1_000_000_000.0;
 
+                for (Entity stillObject : stillObjects) {
+                    stillObject.update((int) elapsedSeconds);
+                }
+
                 entities.forEach(g -> {
                     g.update((int) elapsedSeconds);
                 });
@@ -100,10 +104,6 @@ public class BombermanGame extends Application {
                 bomb.forEach(g -> {
                     g.update((int) elapsedSeconds);
                 });
-
-                for (Entity stillObject : stillObjects) {
-                    stillObject.update((int) elapsedSeconds);
-                }
 
                 render();
                 Movement.move(entities.get(0), dx, dy, stillObjects, HEIGHT, WIDTH, bomb);
@@ -241,14 +241,24 @@ public class BombermanGame extends Application {
             }
         });
         entities.forEach(g -> {
-            g.render(gc);
             if(!temp.isEmpty()) g.checkDeadFlame(bomb);
             if(g instanceof Bomber) {
                 g.checkDeadEnemy(entities);
             }
+            g.render(gc);
         });
-        entities.removeIf(g -> {
-           return g.getState().equals("dead");
+        entities.forEach(g -> {
+            if(g.getState().equals("dead")) {
+                Timer count = new Timer();
+                count.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        entities.removeIf(g -> {
+                            return g.getState().equals("dead");
+                        });
+                        count.cancel();
+                    }},200,1);
+            }
         });
         temp.clear();
     }
