@@ -94,11 +94,13 @@ public class Bomb extends Entity{
                     if (g.getX() <= this.getX() + maxSizeRight * Sprite.SCALED_SIZE && g.getX() >= this.getX() - maxSizeLeft * Sprite.SCALED_SIZE && g.getY() == this.getY()) {
                         g.setState("dead");
                         g.explode(stillObject, HEIGHT, aroundObject);
+                        g.collideWithBrick(stillObject, HEIGHT);
                         g.setState("explode");
                     }
                     if (g.getY() <= this.getY() + maxSizeDown * Sprite.SCALED_SIZE && g.getY() >= this.getY() - maxSizeTop * Sprite.SCALED_SIZE && g.getX() == this.getX()) {
                         g.setState("dead");
                         g.explode(stillObject, HEIGHT, aroundObject);
+                        g.collideWithBrick(stillObject, HEIGHT);
                         g.setState("explode");
                     }
                 }
@@ -112,14 +114,6 @@ public class Bomb extends Entity{
         if(maxSizeTop<level) {
             if(stillObjects.get(bombX * HEIGHT + bombY - maxSizeTop -1) instanceof Brick) {
                 stillObjects.get(bombX * HEIGHT + bombY - maxSizeTop -1).setState("dead");
-                Timer temp = new Timer();
-                temp.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        stillObjects.set(bombX * HEIGHT + bombY - maxSizeTop -1, new Grass(bombX,bombY-maxSizeTop-1,Sprite.grass.getFxImage()));
-                        temp.cancel();
-                    }
-                },200,1);
             }
         }
         if(maxSizeDown<level) {

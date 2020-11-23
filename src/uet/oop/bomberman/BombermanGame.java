@@ -43,9 +43,12 @@ public class BombermanGame extends Application {
 
     private long lastUpdate; // Last time in which `handle()` was called
     private int speed = 2 ; // tốc độ nhân vật di chuyển
+    private int maxSpeed = 4;// toc do toi da
     private int enemySpeed = 1; //tốc độ địch di chuyển
     private int maxBomb = 2;// Số bomb tối đa được đặt
+    private int maxBombCanPowerUp = 3;//so bom toi da co the nang cap
     private int flameLevel = 1;//do dai cua flame
+    private int maxFlameLevel = 3;//so level lua toi da
 
     private int dx;
     private int dy;
@@ -57,6 +60,7 @@ public class BombermanGame extends Application {
     private List<Entity> stillObjects = new ArrayList<>();
     private List<Bomb> bomb = new ArrayList<>();
     private List<Flame> temp = new ArrayList<>();
+    private List<Entity> Item = new ArrayList<>();
 
     public static void main(String[] args) {
         Application.launch(BombermanGame.class);
@@ -106,7 +110,7 @@ public class BombermanGame extends Application {
                 });
 
                 render();
-                Movement.move(entities.get(0), dx, dy, stillObjects, HEIGHT, WIDTH, bomb);
+                if(entities.get(0) instanceof Bomber) Movement.move(entities.get(0), dx, dy, stillObjects, HEIGHT, WIDTH, bomb);
 
 //                if (entities.get(0).getState().equals("dead")) {
 //                    Timer temp = new Timer();
@@ -149,7 +153,7 @@ public class BombermanGame extends Application {
                     }
 
                     if (key == KeyCode.SPACE) {
-                        createBomb();
+                        entities.get(0).createBomb(bomb, maxBomb, flameLevel);
                     }
                 }
             });
@@ -215,24 +219,32 @@ public class BombermanGame extends Application {
         }
     }
 
-    public void createBomb() {
-        int realX = entities.get(0).getX()/Sprite.SCALED_SIZE;
-        int realY = entities.get(0).getY()/Sprite.SCALED_SIZE;
-        int tempX = entities.get(0).getX()%Sprite.SCALED_SIZE;
-        int tempY = entities.get(0).getY()%Sprite.SCALED_SIZE;
-        if(tempX > 16) realX += 1;
-        if(tempY > 16) realY += 1;
-        if(bomb.size() < maxBomb) {
-            Bomb newBomb = new Bomb(realX, realY, Sprite.bomb_2.getFxImage());
-            newBomb.setLevel(flameLevel);
-            bomb.add(newBomb);
-            newBomb.startCount();
-        }
-    }
+//    public void createBomb() {
+//        int realX = entities.get(0).getX()/Sprite.SCALED_SIZE;
+//        int realY = entities.get(0).getY()/Sprite.SCALED_SIZE;
+//        int tempX = entities.get(0).getX()%Sprite.SCALED_SIZE;
+//        int tempY = entities.get(0).getY()%Sprite.SCALED_SIZE;
+//        if(tempX > 16) realX += 1;
+//        if(tempY > 16) realY += 1;
+//        if(bomb.size() < maxBomb) {
+//            Bomb newBomb = new Bomb(realX, realY, Sprite.bomb_2.getFxImage());
+//            newBomb.setLevel(flameLevel);
+//            bomb.add(newBomb);
+//            newBomb.startCount();
+//        }
+//    }
 
     public void render() {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        stillObjects.forEach(g -> g.render(gc));
+        stillObjects.forEach(g -> {
+            if(g instanceof Brick && g.getState().equals("dead"))  {
+                    ((Brick) g).destroyBrick(stillObjects,HEIGHT);
+            }
+            g.render(gc);
+        });
+        bomb.removeIf(g -> {
+            return g.getState().equals("explode");
+        });
         bomb.forEach(g -> g.render(gc));
         bomb.forEach(g -> {
             if(g.getState().equals("dead")) {
@@ -246,20 +258,19 @@ public class BombermanGame extends Application {
                 g.checkDeadEnemy(entities);
             }
             g.render(gc);
-        });
-        entities.forEach(g -> {
             if(g.getState().equals("dead")) {
                 Timer count = new Timer();
                 count.schedule(new TimerTask() {
                     @Override
                     public void run() {
-                        entities.removeIf(g -> {
-                            return g.getState().equals("dead");
-                        });
+                        entities.remove(g);
                         count.cancel();
                     }},200,1);
             }
         });
+//        entities.forEach(g -> {
+//
+//        });
         temp.clear();
     }
 
@@ -272,9 +283,6 @@ public class BombermanGame extends Application {
             @Override
             public void run() {
                 g.setState("explode");
-                bomb.removeIf(g -> {
-                    return g.getState().equals("explode");
-                });
                 count.cancel();
             }},200,1);
     }

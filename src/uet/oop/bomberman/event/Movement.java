@@ -9,11 +9,11 @@ import java.util.List;
 
 public class Movement {
     public static void move(Mob entity, int dx, int dy, List<Entity> stillObjects, int HEIGHT, int WIDTH, List<Bomb> bomb) {
+
         int realX = entity.getX()/ Sprite.SCALED_SIZE;
         int realY = entity.getY()/Sprite.SCALED_SIZE;
         int tempX = entity.getX()%Sprite.SCALED_SIZE;
         int tempY = entity.getY()%Sprite.SCALED_SIZE;
-        boolean check;
         if(entity.getState().equals("right")){
 
             //làm tròn Y để dễ di chuyển
