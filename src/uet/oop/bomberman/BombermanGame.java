@@ -8,6 +8,9 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
+import uet.oop.bomberman.entities.Item.BombItem;
+import uet.oop.bomberman.entities.Item.FlameItem;
+import uet.oop.bomberman.entities.Item.SpeedItem;
 import uet.oop.bomberman.entities.base.*;
 import uet.oop.bomberman.entities.Bomb.*;
 import uet.oop.bomberman.entities.Mob.*;
@@ -25,7 +28,7 @@ public class BombermanGame extends Application {
             "# # # #*# # #*#*# # # #*#*#*# #",
             "#  x*     ***  *  1   * 2 * * #",
             "# # # # # #*# # #*#*# # # # #*#",
-            "#f         x **  *  *   1     #",
+            "#          x **  *  *   1     #",
             "# # # # # # # # # #*# #*# # # #",
             "#*  *      *  *      *        #",
             "# # # # #*# # # #*#*# # # # # #",
@@ -42,7 +45,7 @@ public class BombermanGame extends Application {
     private int speed = 2 ; // tốc độ nhân vật di chuyển
     private int maxSpeed = 4;// toc do toi da
     private int enemySpeed = 1; //tốc độ địch di chuyển
-    private int maxBomb = 3;// Số bomb tối đa được đặt
+    private int maxBomb = 1;// Số bomb tối đa được đặt
     private int maxBombCanPowerUp = 3;//so bom toi da co the nang cap
     private int flameLevel = 1;//do dai cua flame
     private int maxFlameLevel = 3;//so level lua toi da
@@ -57,7 +60,7 @@ public class BombermanGame extends Application {
     private List<Entity> stillObjects = new ArrayList<>();
     private List<Bomb> bomb = new ArrayList<>();
     private List<Flame> temp = new ArrayList<>();
-    private List<Entity> Item = new ArrayList<>();
+    private List<Entity> ItemList = new ArrayList<>();
 
     public static void main(String[] args) {
         Application.launch(BombermanGame.class);
@@ -83,6 +86,7 @@ public class BombermanGame extends Application {
         lastUpdate = System.nanoTime();
 
         createMap();
+        createItem();
         createEntity();
 
 
@@ -97,7 +101,9 @@ public class BombermanGame extends Application {
                 for (Entity stillObject : stillObjects) {
                     stillObject.update((int) elapsedSeconds);
                 }
-
+                for (Entity ItemList : ItemList) {
+                    ItemList.update((int) elapsedSeconds);
+                }
                 entities.forEach(g -> {
                     g.update((int) elapsedSeconds);
                 });
@@ -108,6 +114,7 @@ public class BombermanGame extends Application {
 
                 render();
                 if(entities.get(0) instanceof Bomber) Movement.move(entities.get(0), dx, dy, stillObjects, HEIGHT, WIDTH, bomb);
+
                 for(int i = 1; i < entities.size();i++) {
                     if (entities.get(i).getState().equals("right")) {
                         Movement.move(entities.get(i), enemySpeed, enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
@@ -118,8 +125,18 @@ public class BombermanGame extends Application {
                     } else if (entities.get(i).getState().equals("left")) {
                         Movement.move(entities.get(i), -enemySpeed, enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
                     }
-                    randomState(entities.get(i));
+                    if (entities.get(i) instanceof BalloomEnemy) {
+                        randomState(entities.get(i));
+                    } else if (entities.get(i) instanceof OnealEnemy) {
+                        randomStateForOneal(((OnealEnemy)entities.get(i)));
+                    }
+
                 }
+
+                if(!ItemList.isEmpty()){
+                    itemBuff();
+                }
+
 //                if (entities.get(0).getState().equals("dead")) {
 //                    Timer temp = new Timer();
 //                    temp.schedule(new TimerTask() {
@@ -210,6 +227,21 @@ public class BombermanGame extends Application {
         }
     }
 
+    public void createItem() {
+        FlameItem f1 = new FlameItem(7, 1, Sprite.powerup_flames.getFxImage());
+        FlameItem f2 = new FlameItem(11, 4, Sprite.powerup_flames.getFxImage());
+        BombItem b1 = new BombItem(3,10,Sprite.powerup_bombs.getFxImage());
+        BombItem b2 = new BombItem(17,10,Sprite.powerup_bombs.getFxImage());
+        SpeedItem s1 = new SpeedItem(25, 2, Sprite.powerup_speed.getFxImage());
+        SpeedItem s2 = new SpeedItem(29, 4, Sprite.powerup_speed.getFxImage());
+        ItemList.add(f1);
+        ItemList.add(f2);
+        ItemList.add(b1);
+        ItemList.add(b2);
+        ItemList.add(s1);
+        ItemList.add(s2);
+    }
+
     public void createEntity() {
         for (int i = 0; i < WIDTH; i++) {
             for (int j = 0; j < HEIGHT; j++) {
@@ -233,10 +265,23 @@ public class BombermanGame extends Application {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         stillObjects.forEach(g -> {
             if(g instanceof Brick && g.getState().equals("dead"))  {
-                ((Brick) g).destroyBrick(stillObjects,HEIGHT);
+                ((Brick) g).destroyBrick(stillObjects,ItemList,HEIGHT);
             }
             g.render(gc);
         });
+        ItemList.forEach(g->{
+            int realX = g.getX()/Sprite.SCALED_SIZE, realY = g.getY()/Sprite.SCALED_SIZE;
+            if(stillObjects.get(realX*HEIGHT+realY) instanceof Grass) {
+                g.render(gc);
+            }
+
+        });
+        if(!ItemList.isEmpty()) {
+            ItemList.removeIf(g->{
+                return g.getState().equals("dead");
+            });
+        }
+
         bomb.forEach(g -> g.render(gc));
         bomb.forEach(g -> {
             if(g.getState().equals("dead")) {
@@ -307,9 +352,45 @@ public class BombermanGame extends Application {
                 }
             }
         }
-
-
     }
+
+    public void randomStateForOneal(OnealEnemy e) {
+        int realX = e.getX()/Sprite.SCALED_SIZE;
+        int realY = e.getY()/Sprite.SCALED_SIZE;
+        Random generator = new Random();
+        Timer count = new Timer();
+
+        count.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                int randomStateNumber;
+                if(e.getX()%Sprite.SCALED_SIZE==0 && (e.getY()%Sprite.SCALED_SIZE==0)){
+                    if (e.getState().equals("right")) {
+                        if(!e.collidesWith(stillObjects.get(realX * HEIGHT + realY +HEIGHT)) || !e.collidesWithBomb(bomb)){
+                            randomStateNumber = generator.nextInt(4) + 1;
+                            setRandomState(randomStateNumber,e);
+                        }
+                    } else if (e.getState().equals("up")) {
+                        if(!e.collidesWith(stillObjects.get(realX * HEIGHT + realY -1)) || !e.collidesWithBomb(bomb)){
+                            randomStateNumber = generator.nextInt(4) + 1;
+                            setRandomState(randomStateNumber,e);
+                        }
+                    } else if (e.getState().equals("down")) {
+                        if(!e.collidesWith(stillObjects.get(realX * HEIGHT + realY +1)) || !e.collidesWithBomb(bomb)){
+                            randomStateNumber = generator.nextInt(4) + 1;
+                            setRandomState(randomStateNumber,e);
+                        }
+                    } else if (e.getState().equals("left")) {
+                        if (!e.collidesWith(stillObjects.get(realX * HEIGHT + realY-HEIGHT)) || !e.collidesWithBomb(bomb)){
+                            randomStateNumber = generator.nextInt(4) + 1;
+                            setRandomState(randomStateNumber,e);
+                        }
+                    }
+                }
+                count.cancel();
+            }},2000,1);
+    }
+
     public void setRandomState(int i, Mob e) {
         switch (i) {
             case 1: {
@@ -326,5 +407,26 @@ public class BombermanGame extends Application {
                 break;
             }
         }
+    }
+    public void itemBuff () {
+        ItemList.forEach(item->{
+            if(item instanceof FlameItem && flameLevel < maxFlameLevel) {
+                if(((FlameItem) item).collidesWithBomber(entities.get(0))){
+                    flameLevel++;
+                    item.setState("dead");
+                }
+            } else if (item instanceof BombItem && maxBomb < maxBombCanPowerUp) {
+                if(((BombItem) item).collidesWithBomber(entities.get(0))){
+                    maxBomb++;
+                    item.setState("dead");
+                }
+            } else if (item instanceof SpeedItem && speed < maxSpeed) {
+                if(((SpeedItem) item).collidesWithBomber(entities.get(0))){
+                    speed++;
+                    item.setState("dead");
+                }
+            }
+        });
+
     }
 }

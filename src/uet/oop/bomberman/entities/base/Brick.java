@@ -2,6 +2,7 @@ package uet.oop.bomberman.entities.base;
 
 import javafx.scene.image.Image;
 import uet.oop.bomberman.entities.Entity;
+import uet.oop.bomberman.entities.Item.FlameItem;
 import uet.oop.bomberman.graphics.Sprite;
 
 import java.util.List;
@@ -9,19 +10,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Brick extends Entity {
-    protected String item;
     public Brick(int x, int y, Image img) {
-        super(x, y, img);
+        super(x,y,img);
     }
-
-    public String getItem() {
-        return item;
-    }
-
-    public void setItem(String item) {
-        this.item = item;
-    }
-
     @Override
     public void update(int time) {
         if(state.equals("dead")) {
@@ -29,7 +20,7 @@ public class Brick extends Entity {
         }
     }
 
-    public void destroyBrick(List<Entity> stillObjects,int HEIGHT) {
+    public void destroyBrick(List<Entity> stillObjects,List<Entity> ItemList,int HEIGHT) {
         int realX = this.x/Sprite.SCALED_SIZE;
         int realY = this.y/Sprite.SCALED_SIZE;
         Timer temp = new Timer();
