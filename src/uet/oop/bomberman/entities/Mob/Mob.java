@@ -56,9 +56,9 @@ public class Mob extends Entity {
     public boolean collidesWithBomb(List<Bomb> bomb) {
         for(Entity other : bomb) {
             if((x-(other.getX()-32)==0 && state.equals("right") && y == other.getY())
-                || (x-(other.getX()+32)==0 && state.equals("left") && y == other.getY())
-                || (y-(other.getY()-32)==0 && state.equals("down") && x == other.getX())
-                || (y-(other.getY()+32)==0 && state.equals("up") && x == other.getX())) return false;
+                    || (x-(other.getX()+32)==0 && state.equals("left") && y == other.getY())
+                    || (y-(other.getY()-32)==0 && state.equals("down") && x == other.getX())
+                    || (y-(other.getY()+32)==0 && state.equals("up") && x == other.getX())) return false;
         }
         return true;
     }
@@ -66,7 +66,7 @@ public class Mob extends Entity {
     public void checkDeadFlame(List<Bomb> bomb) {
 
         for (Bomb other :bomb) {
-            if(other.getState().equals("explode")) {
+            if(other.getState().equals("dead")) {
                 if (this.getX() < other.getX() + (other.getMaxSizeRight() + 1) * Sprite.SCALED_SIZE && this.getX() > other.getX() - (other.getMaxSizeLeft() + 1) * Sprite.SCALED_SIZE && this.getY() == other.getY()) {
                     this.state = "dead";
                     break;

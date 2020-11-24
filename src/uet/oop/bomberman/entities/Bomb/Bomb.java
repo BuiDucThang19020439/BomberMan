@@ -40,7 +40,7 @@ public class Bomb extends Entity{
                 setState("dead");
                 temp.cancel();
             }
-            },timer * 1000,1);
+        },timer * 1000,1);
     }
 
     public void explode(List<Entity> stillObject, int HEIGHT, List<Flame> aroundObject) {
@@ -95,13 +95,11 @@ public class Bomb extends Entity{
                         g.setState("dead");
                         g.explode(stillObject, HEIGHT, aroundObject);
                         g.collideWithBrick(stillObject, HEIGHT);
-                        g.setState("explode");
                     }
                     if (g.getY() <= this.getY() + maxSizeDown * Sprite.SCALED_SIZE && g.getY() >= this.getY() - maxSizeTop * Sprite.SCALED_SIZE && g.getX() == this.getX()) {
                         g.setState("dead");
                         g.explode(stillObject, HEIGHT, aroundObject);
                         g.collideWithBrick(stillObject, HEIGHT);
-                        g.setState("explode");
                     }
                 }
             }
@@ -131,7 +129,7 @@ public class Bomb extends Entity{
         }
         if(maxSizeLeft<level) {
             if(stillObjects.get(bombX * HEIGHT + bombY - (maxSizeLeft +1) * HEIGHT) instanceof Brick) {
-                stillObjects.get(bombX * HEIGHT + bombY - (maxSizeLeft +1)).setState("dead");
+                stillObjects.get(bombX * HEIGHT + bombY - (maxSizeLeft +1) * HEIGHT).setState("dead");
                 Timer temp = new Timer();
                 temp.schedule(new TimerTask() {
                     @Override

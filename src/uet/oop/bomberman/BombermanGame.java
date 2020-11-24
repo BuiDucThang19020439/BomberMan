@@ -15,10 +15,7 @@ import uet.oop.bomberman.entities.Entity;
 import uet.oop.bomberman.graphics.Sprite;
 import uet.oop.bomberman.event.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class BombermanGame extends Application {
 
@@ -36,7 +33,7 @@ public class BombermanGame extends Application {
             "# #*# # # # # # #*# # # # # # #",
             "#           *   *  *          #",
             "###############################"
-            };
+    };
 
     public static final int WIDTH = 31;
     public static final int HEIGHT = 13;
@@ -45,7 +42,7 @@ public class BombermanGame extends Application {
     private int speed = 2 ; // tốc độ nhân vật di chuyển
     private int maxSpeed = 4;// toc do toi da
     private int enemySpeed = 1; //tốc độ địch di chuyển
-    private int maxBomb = 2;// Số bomb tối đa được đặt
+    private int maxBomb = 3;// Số bomb tối đa được đặt
     private int maxBombCanPowerUp = 3;//so bom toi da co the nang cap
     private int flameLevel = 1;//do dai cua flame
     private int maxFlameLevel = 3;//so level lua toi da
@@ -111,7 +108,18 @@ public class BombermanGame extends Application {
 
                 render();
                 if(entities.get(0) instanceof Bomber) Movement.move(entities.get(0), dx, dy, stillObjects, HEIGHT, WIDTH, bomb);
-
+                for(int i = 1; i < entities.size();i++) {
+                    if (entities.get(i).getState().equals("right")) {
+                        Movement.move(entities.get(i), enemySpeed, enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
+                    } else if (entities.get(i).getState().equals("up")) {
+                        Movement.move(entities.get(i), enemySpeed, -enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
+                    } else if (entities.get(i).getState().equals("down")) {
+                        Movement.move(entities.get(i), enemySpeed, enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
+                    } else if (entities.get(i).getState().equals("left")) {
+                        Movement.move(entities.get(i), -enemySpeed, enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
+                    }
+                    randomState(entities.get(i));
+                }
 //                if (entities.get(0).getState().equals("dead")) {
 //                    Timer temp = new Timer();
 //                    temp.schedule(new TimerTask() {
@@ -129,34 +137,34 @@ public class BombermanGame extends Application {
 
 
         scene.setOnKeyPressed(e->{
-                if(!entities.get(0).getState().equals("dead")) {
-                    KeyCode key = e.getCode();
+            if(!entities.get(0).getState().equals("dead")) {
+                KeyCode key = e.getCode();
 
-                    if (key == KeyCode.LEFT) {
-                        entities.get(0).setState("left");
-                        dx = -speed;
-                    }
-
-                    if (key == KeyCode.RIGHT) {
-                        entities.get(0).setState("right");
-                        dx = speed;
-                    }
-
-                    if (key == KeyCode.UP) {
-                        entities.get(0).setState("up");
-                        dy = -speed;
-                    }
-
-                    if (key == KeyCode.DOWN) {
-                        entities.get(0).setState("down");
-                        dy = speed;
-                    }
-
-                    if (key == KeyCode.SPACE) {
-                        entities.get(0).createBomb(bomb, maxBomb, flameLevel);
-                    }
+                if (key == KeyCode.LEFT) {
+                    entities.get(0).setState("left");
+                    dx = -speed;
                 }
-            });
+
+                if (key == KeyCode.RIGHT) {
+                    entities.get(0).setState("right");
+                    dx = speed;
+                }
+
+                if (key == KeyCode.UP) {
+                    entities.get(0).setState("up");
+                    dy = -speed;
+                }
+
+                if (key == KeyCode.DOWN) {
+                    entities.get(0).setState("down");
+                    dy = speed;
+                }
+
+                if (key == KeyCode.SPACE) {
+                    entities.get(0).createBomb(bomb, maxBomb, flameLevel);
+                }
+            }
+        });
 
         scene.setOnKeyReleased(e->{
             if(!entities.get(0).getState().equals("dead")) {
@@ -182,7 +190,7 @@ public class BombermanGame extends Application {
                     dy = 0;
                 }
             }
-            });
+        });
 
     }
 
@@ -210,40 +218,24 @@ public class BombermanGame extends Application {
                     entities.add(object);
                 } else if (map[j].charAt(i) == '1') {
                     Mob object = new BalloomEnemy(i, j, Sprite.balloom_left1.getFxImage());
+                    object.setState("right");
                     entities.add(object);
                 } else if (map[j].charAt(i) == '2') {
                     Mob object = new OnealEnemy(i, j, Sprite.oneal_left1.getFxImage());
+                    object.setState("right");
                     entities.add(object);
                 }
             }
         }
     }
 
-//    public void createBomb() {
-//        int realX = entities.get(0).getX()/Sprite.SCALED_SIZE;
-//        int realY = entities.get(0).getY()/Sprite.SCALED_SIZE;
-//        int tempX = entities.get(0).getX()%Sprite.SCALED_SIZE;
-//        int tempY = entities.get(0).getY()%Sprite.SCALED_SIZE;
-//        if(tempX > 16) realX += 1;
-//        if(tempY > 16) realY += 1;
-//        if(bomb.size() < maxBomb) {
-//            Bomb newBomb = new Bomb(realX, realY, Sprite.bomb_2.getFxImage());
-//            newBomb.setLevel(flameLevel);
-//            bomb.add(newBomb);
-//            newBomb.startCount();
-//        }
-//    }
-
     public void render() {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         stillObjects.forEach(g -> {
             if(g instanceof Brick && g.getState().equals("dead"))  {
-                    ((Brick) g).destroyBrick(stillObjects,HEIGHT);
+                ((Brick) g).destroyBrick(stillObjects,HEIGHT);
             }
             g.render(gc);
-        });
-        bomb.removeIf(g -> {
-            return g.getState().equals("explode");
         });
         bomb.forEach(g -> g.render(gc));
         bomb.forEach(g -> {
@@ -268,9 +260,6 @@ public class BombermanGame extends Application {
                     }},200,1);
             }
         });
-//        entities.forEach(g -> {
-//
-//        });
         temp.clear();
     }
 
@@ -283,8 +272,59 @@ public class BombermanGame extends Application {
             @Override
             public void run() {
                 g.setState("explode");
+                bomb.removeIf(g -> {
+                    return g.getState().equals("explode");
+                });
                 count.cancel();
             }},200,1);
     }
 
+    public void randomState(Mob e) {
+        int realX = e.getX()/Sprite.SCALED_SIZE;
+        int realY = e.getY()/Sprite.SCALED_SIZE;
+        Random generator = new Random();
+        int randomStateNumber;
+        if(e.getX()%Sprite.SCALED_SIZE==0 && (e.getY()%Sprite.SCALED_SIZE==0)){
+            if (e.getState().equals("right")) {
+                if(!e.collidesWith(stillObjects.get(realX * HEIGHT + realY +HEIGHT)) || !e.collidesWithBomb(bomb)){
+                    randomStateNumber = generator.nextInt(4) + 1;
+                    setRandomState(randomStateNumber,e);
+                }
+            } else if (e.getState().equals("up")) {
+                if(!e.collidesWith(stillObjects.get(realX * HEIGHT + realY -1)) || !e.collidesWithBomb(bomb)){
+                    randomStateNumber = generator.nextInt(4) + 1;
+                    setRandomState(randomStateNumber,e);
+                }
+            } else if (e.getState().equals("down")) {
+                if(!e.collidesWith(stillObjects.get(realX * HEIGHT + realY +1)) || !e.collidesWithBomb(bomb)){
+                    randomStateNumber = generator.nextInt(4) + 1;
+                    setRandomState(randomStateNumber,e);
+                }
+            } else if (e.getState().equals("left")) {
+                if (!e.collidesWith(stillObjects.get(realX * HEIGHT + realY-HEIGHT)) || !e.collidesWithBomb(bomb)){
+                    randomStateNumber = generator.nextInt(4) + 1;
+                    setRandomState(randomStateNumber,e);
+                }
+            }
+        }
+
+
+    }
+    public void setRandomState(int i, Mob e) {
+        switch (i) {
+            case 1: {
+                e.setState("up");
+                break;
+            } case 2: {
+                e.setState("down");
+                break;
+            } case 3: {
+                e.setState("left");
+                break;
+            } default: {
+                e.setState("right");
+                break;
+            }
+        }
+    }
 }

@@ -9,9 +9,17 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Brick extends Entity {
-
+    protected String item;
     public Brick(int x, int y, Image img) {
         super(x, y, img);
+    }
+
+    public String getItem() {
+        return item;
+    }
+
+    public void setItem(String item) {
+        this.item = item;
     }
 
     @Override
