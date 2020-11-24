@@ -45,7 +45,7 @@ public class BombermanGame extends Application {
     private int speed = 2 ; // tốc độ nhân vật di chuyển
     private int maxSpeed = 4;// toc do toi da
     private int enemySpeed = 1; //tốc độ địch di chuyển
-    private int maxBomb = 2;// Số bomb tối đa được đặt
+    private int maxBomb = 3;// Số bomb tối đa được đặt
     private int maxBombCanPowerUp = 3;//so bom toi da co the nang cap
     private int flameLevel = 1;//do dai cua flame
     private int maxFlameLevel = 3;//so level lua toi da
@@ -219,21 +219,6 @@ public class BombermanGame extends Application {
         }
     }
 
-//    public void createBomb() {
-//        int realX = entities.get(0).getX()/Sprite.SCALED_SIZE;
-//        int realY = entities.get(0).getY()/Sprite.SCALED_SIZE;
-//        int tempX = entities.get(0).getX()%Sprite.SCALED_SIZE;
-//        int tempY = entities.get(0).getY()%Sprite.SCALED_SIZE;
-//        if(tempX > 16) realX += 1;
-//        if(tempY > 16) realY += 1;
-//        if(bomb.size() < maxBomb) {
-//            Bomb newBomb = new Bomb(realX, realY, Sprite.bomb_2.getFxImage());
-//            newBomb.setLevel(flameLevel);
-//            bomb.add(newBomb);
-//            newBomb.startCount();
-//        }
-//    }
-
     public void render() {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         stillObjects.forEach(g -> {
@@ -241,9 +226,6 @@ public class BombermanGame extends Application {
                     ((Brick) g).destroyBrick(stillObjects,HEIGHT);
             }
             g.render(gc);
-        });
-        bomb.removeIf(g -> {
-            return g.getState().equals("explode");
         });
         bomb.forEach(g -> g.render(gc));
         bomb.forEach(g -> {
@@ -268,9 +250,6 @@ public class BombermanGame extends Application {
                     }},200,1);
             }
         });
-//        entities.forEach(g -> {
-//
-//        });
         temp.clear();
     }
 
@@ -283,6 +262,9 @@ public class BombermanGame extends Application {
             @Override
             public void run() {
                 g.setState("explode");
+                bomb.removeIf(g -> {
+                    return g.getState().equals("explode");
+                });
                 count.cancel();
             }},200,1);
     }

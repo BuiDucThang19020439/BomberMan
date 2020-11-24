@@ -66,7 +66,7 @@ public class Mob extends Entity {
     public void checkDeadFlame(List<Bomb> bomb) {
 
         for (Bomb other :bomb) {
-            if(other.getState().equals("explode")) {
+            if(other.getState().equals("dead")) {
                 if (this.getX() < other.getX() + (other.getMaxSizeRight() + 1) * Sprite.SCALED_SIZE && this.getX() > other.getX() - (other.getMaxSizeLeft() + 1) * Sprite.SCALED_SIZE && this.getY() == other.getY()) {
                     this.state = "dead";
                     break;
