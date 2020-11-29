@@ -104,14 +104,14 @@ public class BombermanGame extends Application {
                 for (Entity ItemList : ItemList) {
                     ItemList.update((int) elapsedSeconds);
                 }
-                entities.forEach(g -> {
-                    g.update((int) elapsedSeconds);
-                });
+
 
                 bomb.forEach(g -> {
                     g.update((int) elapsedSeconds);
                 });
-
+                entities.forEach(g -> {
+                    g.update((int) elapsedSeconds);
+                });
                 render();
                 if(entities.get(0) instanceof Bomber) Movement.move(entities.get(0), dx, dy, stillObjects, HEIGHT, WIDTH, bomb);
 
@@ -281,28 +281,37 @@ public class BombermanGame extends Application {
                 return g.getState().equals("dead");
             });
         }
+        bomb.removeIf(g -> {
+            return g.getState().equals("explode");
+        });
 
-        bomb.forEach(g -> g.render(gc));
         bomb.forEach(g -> {
             if(g.getState().equals("dead")) {
                 destroyAround(g);
                 g.collideWithBrick(stillObjects,HEIGHT);
             }
+            else g.render(gc);
         });
+
         entities.forEach(g -> {
             if(!temp.isEmpty()) g.checkDeadFlame(bomb);
             if(g instanceof Bomber) {
                 g.checkDeadEnemy(entities);
             }
+
+
             g.render(gc);
-            if(g.getState().equals("dead")) {
+        });
+        entities.forEach( g -> {
+            if (g.getState().equals("dead")) {
                 Timer count = new Timer();
                 count.schedule(new TimerTask() {
                     @Override
                     public void run() {
                         entities.remove(g);
                         count.cancel();
-                    }},200,1);
+                    }
+                }, 200, 1);
             }
         });
         temp.clear();
@@ -317,9 +326,6 @@ public class BombermanGame extends Application {
             @Override
             public void run() {
                 g.setState("explode");
-                bomb.removeIf(g -> {
-                    return g.getState().equals("explode");
-                });
                 count.cancel();
             }},200,1);
     }
