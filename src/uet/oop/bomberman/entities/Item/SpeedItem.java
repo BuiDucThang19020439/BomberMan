@@ -21,5 +21,4 @@ public class SpeedItem extends Entity {
     public void update(int time) {
 
     }
-
 }

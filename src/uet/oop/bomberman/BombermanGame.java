@@ -2,12 +2,28 @@ package uet.oop.bomberman;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
+import javafx.geometry.Insets;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.GridPane;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import uet.oop.bomberman.entities.Item.BombItem;
 import uet.oop.bomberman.entities.Item.FlameItem;
 import uet.oop.bomberman.entities.Item.SpeedItem;
@@ -28,7 +44,7 @@ public class BombermanGame extends Application {
             "# # # #*# # #*#*# # # #*#*#*# #",
             "#  x*     ***  *  1   * 2 * * #",
             "# # # # # #*# # #*#*# # # # #*#",
-            "#          x **  *  *   1     #",
+            "#f         x **  *  *   1     #",
             "# # # # # # # # # #*# #*# # # #",
             "#*  *      *  *      *        #",
             "# # # # #*# # # #*#*# # # # # #",
@@ -45,9 +61,9 @@ public class BombermanGame extends Application {
     private int speed = 2 ; // tốc độ nhân vật di chuyển
     private int maxSpeed = 4;// toc do toi da
     private int enemySpeed = 1; //tốc độ địch di chuyển
-    private int maxBomb = 1;// Số bomb tối đa được đặt
+    private int maxBomb = 3;// Số bomb tối đa được đặt
     private int maxBombCanPowerUp = 3;//so bom toi da co the nang cap
-    private int flameLevel = 1;//do dai cua flame
+    private int flameLevel = 2;//do dai cua flame
     private int maxFlameLevel = 3;//so level lua toi da
 
     private int dx;
@@ -56,6 +72,7 @@ public class BombermanGame extends Application {
     private GraphicsContext gc;
     private Canvas canvas;
 
+    private List<Mob> players = new ArrayList<>();
     private List<Mob> entities = new ArrayList<>();
     private List<Entity> stillObjects = new ArrayList<>();
     private List<Bomb> bomb = new ArrayList<>();
@@ -67,7 +84,7 @@ public class BombermanGame extends Application {
     }
 
     @Override
-    public void start(Stage stage) {
+    public void start(Stage stage) throws Exception {
         // Tao Canvas
         canvas = new Canvas(Sprite.SCALED_SIZE * WIDTH, Sprite.SCALED_SIZE * HEIGHT);
         gc = canvas.getGraphicsContext2D();
@@ -93,118 +110,111 @@ public class BombermanGame extends Application {
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-
                 long elapsedNanoSeconds = now - lastUpdate;
                 // 1 second = 1,000,000,000 (1 billion) nanoseconds
                 double elapsedSeconds = 6 * elapsedNanoSeconds / 1_000_000_000.0;
 
-                for (Entity stillObject : stillObjects) {
-                    stillObject.update((int) elapsedSeconds);
-                }
-                for (Entity ItemList : ItemList) {
-                    ItemList.update((int) elapsedSeconds);
-                }
+                update((int) elapsedSeconds);
 
-
-                bomb.forEach(g -> {
-                    g.update((int) elapsedSeconds);
-                });
-                entities.forEach(g -> {
-                    g.update((int) elapsedSeconds);
-                });
                 render();
-                if(entities.get(0) instanceof Bomber) Movement.move(entities.get(0), dx, dy, stillObjects, HEIGHT, WIDTH, bomb);
 
-                for(int i = 1; i < entities.size();i++) {
-                    if (entities.get(i).getState().equals("right")) {
-                        Movement.move(entities.get(i), enemySpeed, enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
-                    } else if (entities.get(i).getState().equals("up")) {
-                        Movement.move(entities.get(i), enemySpeed, -enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
-                    } else if (entities.get(i).getState().equals("down")) {
-                        Movement.move(entities.get(i), enemySpeed, enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
-                    } else if (entities.get(i).getState().equals("left")) {
-                        Movement.move(entities.get(i), -enemySpeed, enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
-                    }
-                    if (entities.get(i) instanceof BalloomEnemy) {
-                        randomState(entities.get(i));
-                    } else if (entities.get(i) instanceof OnealEnemy) {
-                        randomStateForOneal(((OnealEnemy)entities.get(i)));
-                    }
-
+                move();
+                if (players.isEmpty()) {
+                    Task<Void> task = new Task<Void>() {
+                        @Override
+                        public Void call() throws Exception {
+                            stop();
+                            return null ;
+                        }
+                    };
+                    task.setOnSucceeded(e -> {
+                        boolean ktra = Upgrade.Endgame("lose",(int) elapsedSeconds);
+                        if(ktra) Platform.exit();
+                    });
+                    new Thread(task).start();
                 }
-
-                if(!ItemList.isEmpty()){
-                    itemBuff();
+                if (entities.isEmpty()) {
+                    if(((Portal) ItemList.get(0)).collidesWithBomber(players.get(0))) {
+                        Task<Void> task = new Task<Void>() {
+                            @Override
+                            public Void call() throws Exception {
+                                stop();
+                                return null;
+                            }
+                        };
+                        task.setOnSucceeded(e -> {
+                            boolean ktra = Upgrade.Endgame("win", (int) elapsedSeconds);
+                            if (ktra) Platform.exit();
+                        });
+                        new Thread(task).start();
+                    }
                 }
-
-//                if (entities.get(0).getState().equals("dead")) {
-//                    Timer temp = new Timer();
-//                    temp.schedule(new TimerTask() {
-//                        @Override
-//                        public void run() {
-//                            stop();
-//                            temp.cancel();
-//                        }
-//                    },300,1);
-//
-//                }
             }
         };
         timer.start();
 
-
         scene.setOnKeyPressed(e->{
-            if(!entities.get(0).getState().equals("dead")) {
-                KeyCode key = e.getCode();
+            if(!players.isEmpty()) {
+                if (!players.get(0).getState().equals("dead")) {
+                    KeyCode key = e.getCode();
 
-                if (key == KeyCode.LEFT) {
-                    entities.get(0).setState("left");
-                    dx = -speed;
-                }
+                    if (key == KeyCode.LEFT) {
+                        players.get(0).setState("left");
+                        dx = -speed;
+                    }
 
-                if (key == KeyCode.RIGHT) {
-                    entities.get(0).setState("right");
-                    dx = speed;
-                }
+                    if (key == KeyCode.RIGHT) {
+                        players.get(0).setState("right");
+                        dx = speed;
+                    }
 
-                if (key == KeyCode.UP) {
-                    entities.get(0).setState("up");
-                    dy = -speed;
-                }
+                    if (key == KeyCode.UP) {
+                        players.get(0).setState("up");
+                        dy = -speed;
+                    }
 
-                if (key == KeyCode.DOWN) {
-                    entities.get(0).setState("down");
-                    dy = speed;
-                }
+                    if (key == KeyCode.DOWN) {
+                        players.get(0).setState("down");
+                        dy = speed;
+                    }
 
-                if (key == KeyCode.SPACE) {
-                    entities.get(0).createBomb(bomb, maxBomb, flameLevel);
+                    if (key == KeyCode.SPACE) {
+                        players.get(0).createBomb(bomb, maxBomb, flameLevel);
+                    }
+
+                    if (key == KeyCode.ESCAPE) {
+                        timer.stop();
+                        Upgrade.guide(timer);
+                    }
+
                 }
             }
         });
 
         scene.setOnKeyReleased(e->{
-            if(!entities.get(0).getState().equals("dead")) {
-                KeyCode key = e.getCode();
+            if(!players.isEmpty()) {
+                if (!players.get(0).getState().equals("dead")) {
+                    KeyCode key = e.getCode();
 
-                if (key == KeyCode.LEFT) {
-                    entities.get(0).setState("leftStop");
-                    dx = 0;
-                }
+                    if (key == KeyCode.LEFT) {
+                        players.get(0).setState("leftStop");
+                        dx = 0;
+                    }
 
-                if (key == KeyCode.RIGHT) {
-                    entities.get(0).setState("rightStop");
-                    dx = 0;
-                }
+                    if (key == KeyCode.RIGHT) {
+                        players.get(0).setState("rightStop");
+                        dx = 0;
+                    }
 
-                if (key == KeyCode.UP) {
-                    entities.get(0).setState("upStop");
-                    dy = 0;
-                }
+                    if (key == KeyCode.UP) {
+                        players.get(0).setState("upStop");
+                        dy = 0;
+                    }
 
-                if (key == KeyCode.DOWN) {
-                    entities.get(0).setState("downStop");
-                    dy = 0;
+                    if (key == KeyCode.DOWN) {
+                        players.get(0).setState("downStop");
+                        dy = 0;
+                    }
                 }
             }
         });
@@ -234,6 +244,8 @@ public class BombermanGame extends Application {
         BombItem b2 = new BombItem(17,10,Sprite.powerup_bombs.getFxImage());
         SpeedItem s1 = new SpeedItem(25, 2, Sprite.powerup_speed.getFxImage());
         SpeedItem s2 = new SpeedItem(29, 4, Sprite.powerup_speed.getFxImage());
+        Portal p = new Portal(1, 7, Sprite.portal.getFxImage());
+        ItemList.add(p);
         ItemList.add(f1);
         ItemList.add(f2);
         ItemList.add(b1);
@@ -247,7 +259,7 @@ public class BombermanGame extends Application {
             for (int j = 0; j < HEIGHT; j++) {
                 if (map[j].charAt(i) == 'p') {
                     Mob object = new Bomber(i, j, Sprite.player_right.getFxImage());
-                    entities.add(object);
+                    players.add(object);
                 } else if (map[j].charAt(i) == '1') {
                     Mob object = new BalloomEnemy(i, j, Sprite.balloom_left1.getFxImage());
                     object.setState("right");
@@ -261,11 +273,40 @@ public class BombermanGame extends Application {
         }
     }
 
+    public void update(int elapsedSeconds) {
+
+        for (Entity stillObject : stillObjects) {
+            stillObject.update(elapsedSeconds);
+        }
+
+        for (Entity ItemList : ItemList) {
+            ItemList.update((int) elapsedSeconds);
+        }
+
+        if(!entities.isEmpty()) {
+            for (Mob entity : entities) {
+                entity.update(elapsedSeconds);
+            }
+        }
+
+        players.forEach(g -> {
+            g.update(elapsedSeconds);
+        });
+
+        bomb.forEach(g -> {
+            g.update((elapsedSeconds));
+        });
+
+        if(!ItemList.isEmpty()){
+            itemBuff();
+        }
+    }
+
     public void render() {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         stillObjects.forEach(g -> {
             if(g instanceof Brick && g.getState().equals("dead"))  {
-                ((Brick) g).destroyBrick(stillObjects,ItemList,HEIGHT);
+                ((Brick) g).destroyBrick(stillObjects,HEIGHT);
             }
             g.render(gc);
         });
@@ -284,35 +325,42 @@ public class BombermanGame extends Application {
         bomb.removeIf(g -> {
             return g.getState().equals("explode");
         });
-
+        bomb.forEach(g -> g.render(gc));
         bomb.forEach(g -> {
             if(g.getState().equals("dead")) {
                 destroyAround(g);
                 g.collideWithBrick(stillObjects,HEIGHT);
             }
-            else g.render(gc);
         });
-
         entities.forEach(g -> {
             if(!temp.isEmpty()) g.checkDeadFlame(bomb);
-            if(g instanceof Bomber) {
-                g.checkDeadEnemy(entities);
-            }
-
-
             g.render(gc);
-        });
-        entities.forEach( g -> {
-            if (g.getState().equals("dead")) {
+            if(g.getState().equals("dead")) {
                 Timer count = new Timer();
                 count.schedule(new TimerTask() {
                     @Override
                     public void run() {
                         entities.remove(g);
                         count.cancel();
-                    }
-                }, 200, 1);
+                    }},200,1);
             }
+        });
+        players.forEach(g-> {
+            if(g.getState().equals("dead")) {
+                Timer count = new Timer();
+                count.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        players.remove(g);
+                        count.cancel();
+                    }},200,1);
+            }
+        });
+        players.forEach(g -> {
+            if(!temp.isEmpty()) g.checkDeadFlame(bomb);
+            g.checkDeadEnemy(entities);
+            g.render(gc);
+
         });
         temp.clear();
     }
@@ -326,6 +374,7 @@ public class BombermanGame extends Application {
             @Override
             public void run() {
                 g.setState("explode");
+
                 count.cancel();
             }},200,1);
     }
@@ -414,25 +463,55 @@ public class BombermanGame extends Application {
             }
         }
     }
-    public void itemBuff () {
-        ItemList.forEach(item->{
-            if(item instanceof FlameItem && flameLevel < maxFlameLevel) {
-                if(((FlameItem) item).collidesWithBomber(entities.get(0))){
-                    flameLevel++;
-                    item.setState("dead");
-                }
-            } else if (item instanceof BombItem && maxBomb < maxBombCanPowerUp) {
-                if(((BombItem) item).collidesWithBomber(entities.get(0))){
-                    maxBomb++;
-                    item.setState("dead");
-                }
-            } else if (item instanceof SpeedItem && speed < maxSpeed) {
-                if(((SpeedItem) item).collidesWithBomber(entities.get(0))){
-                    speed++;
-                    item.setState("dead");
-                }
-            }
+
+    public void move() {
+        players.forEach(g -> {
+            Movement.move(g, dx, dy, stillObjects, HEIGHT, WIDTH, bomb);
         });
 
+        for(int i = 0; i < entities.size();i++) {
+            if (entities.get(i).getState().equals("right")) {
+                Movement.move(entities.get(i), enemySpeed, enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
+            } else if (entities.get(i).getState().equals("up")) {
+                Movement.move(entities.get(i), enemySpeed, -enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
+            } else if (entities.get(i).getState().equals("down")) {
+                Movement.move(entities.get(i), enemySpeed, enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
+            } else if (entities.get(i).getState().equals("left")) {
+                Movement.move(entities.get(i), -enemySpeed, enemySpeed, stillObjects, HEIGHT, WIDTH, bomb);
+            }
+            if (entities.get(i) instanceof BalloomEnemy) {
+                randomState(entities.get(i));
+            } else if (entities.get(i) instanceof OnealEnemy) {
+                randomStateForOneal(((OnealEnemy)entities.get(i)));
+            }
+        }
     }
+
+    public void itemBuff () {
+        if(!players.isEmpty()) {
+            ItemList.forEach(item -> {
+                if (item instanceof FlameItem && flameLevel < maxFlameLevel) {
+                    if (((FlameItem) item).collidesWithBomber(players.get(0))) {
+                        flameLevel++;
+                        item.setState("dead");
+                    }
+                } else if (item instanceof BombItem && maxBomb < maxBombCanPowerUp) {
+                    if (((BombItem) item).collidesWithBomber(players.get(0))) {
+                        maxBomb++;
+                        item.setState("dead");
+                    }
+                } else if (item instanceof SpeedItem && speed < maxSpeed) {
+                    if (((SpeedItem) item).collidesWithBomber(players.get(0))) {
+                        speed++;
+                        item.setState("dead");
+                    }
+                } else if (item instanceof Portal && entities.isEmpty()) {
+                    if (((Portal) item).collidesWithBomber(players.get(0))) {
+                        speed++;
+                    }
+                }
+            });
+        }
+    }
+
 }

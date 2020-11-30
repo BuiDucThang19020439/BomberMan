@@ -25,6 +25,7 @@ public class Movement {
                 if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + HEIGHT))
                 && entity.collidesWithBomb(bomb)) {
                     entity.setX(entity.getX() + dx);
+//                    System.out.println(entity.getX() + "   " + entity.getY());
                 }
             }
         }
@@ -40,13 +41,15 @@ public class Movement {
                     if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - 1))
                             && entity.collidesWithBomb(bomb)) {
                         entity.setY(entity.getY() + dy);
+                        //System.out.println(entity.getX() + "   " + entity.getY());
                     }
                 }
                 else {
                     if(entity.collidesWith(stillObjects.get(realX * HEIGHT + realY ))
                             && entity.collidesWithBomb(bomb)) {
                         entity.setY(entity.getY() + dy);
-                                            }
+                        //System.out.println(entity.getX() + "   " + entity.getY());
+                    }
                 }
             }
         }
@@ -62,12 +65,14 @@ public class Movement {
                     if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY - HEIGHT))
                             && entity.collidesWithBomb(bomb)) {
                         entity.setX(entity.getX() + dx);
+                        //System.out.println(entity.getX() + "   " + entity.getY());
                     }
                 }
                 else {
                     if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY))
                             && entity.collidesWithBomb(bomb)) {
                         entity.setX(entity.getX() + dx);
+                        //System.out.println(entity.getX() + "   " + entity.getY());
                     }
                 }
             }
@@ -83,6 +88,7 @@ public class Movement {
                 if (entity.collidesWith(stillObjects.get(realX * HEIGHT + realY + 1))
                         && entity.collidesWithBomb(bomb)) {
                     entity.setY(entity.getY() + dy);
+                    //System.out.println(entity.getX() + "   " + entity.getY());
                 }
             }
         }
