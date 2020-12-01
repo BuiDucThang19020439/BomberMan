@@ -43,12 +43,12 @@ public class BombermanGame extends Application {
             "#p     ** *  1 * 2 *  * * *   #",
             "# # # #*# # #*#*# # # #*#*#*# #",
             "#  x*     ***  *  1   * 2 * * #",
-            "# # # # # #*# # #*#*# # # # #*#",
-            "#f         x **  *  *   1     #",
+            "# # # # # #*# # #*#*# #*#*# #*#",
+            "#f         x **  *  *         #",
             "# # # # # # # # # #*# #*# # # #",
             "#*  *      *  *      *        #",
             "# # # # #*# # # #*#*# # # # # #",
-            "#*    **  *       *           #",
+            "#* 1  **  *       *           #",
             "# #*# # # # # # #*# # # # # # #",
             "#           *   *  *          #",
             "###############################"
@@ -61,9 +61,9 @@ public class BombermanGame extends Application {
     private int speed = 2 ; // tốc độ nhân vật di chuyển
     private int maxSpeed = 4;// toc do toi da
     private int enemySpeed = 1; //tốc độ địch di chuyển
-    private int maxBomb = 3;// Số bomb tối đa được đặt
+    private int maxBomb = 1;// Số bomb tối đa được đặt
     private int maxBombCanPowerUp = 3;//so bom toi da co the nang cap
-    private int flameLevel = 2;//do dai cua flame
+    private int flameLevel = 1;//do dai cua flame
     private int maxFlameLevel = 3;//so level lua toi da
 
     private int dx;
