@@ -78,6 +78,7 @@ public class BombermanGame extends Application {
     private List<Bomb> bomb = new ArrayList<>();
     private List<Flame> temp = new ArrayList<>();
     private List<Entity> ItemList = new ArrayList<>();
+    private List<Entity> renderUnderBrick = new ArrayList<>();
 
     public static void main(String[] args) {
         Application.launch(BombermanGame.class);
@@ -306,7 +307,12 @@ public class BombermanGame extends Application {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         stillObjects.forEach(g -> {
             if(g instanceof Brick && g.getState().equals("dead"))  {
+                int realX = g.getX()/Sprite.SCALED_SIZE;
+                int realY = g.getY()/Sprite.SCALED_SIZE;
+                renderUnderBrick.add(new Grass(realX,realY,Sprite.grass.getFxImage()));
+                renderUnderBrick.forEach(v->v.render(gc));
                 ((Brick) g).destroyBrick(stillObjects,HEIGHT);
+                renderUnderBrick.clear();
             }
             g.render(gc);
         });
@@ -504,10 +510,6 @@ public class BombermanGame extends Application {
                     if (((SpeedItem) item).collidesWithBomber(players.get(0))) {
                         speed++;
                         item.setState("dead");
-                    }
-                } else if (item instanceof Portal && entities.isEmpty()) {
-                    if (((Portal) item).collidesWithBomber(players.get(0))) {
-                        speed++;
                     }
                 }
             });
